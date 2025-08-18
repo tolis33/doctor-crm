@@ -1,0 +1,58 @@
+# Visual Studio / build
+.vs/
+[Bb]in/
+[Oo]bj/
+Debug*/
+Release*/
+TestResults/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.pdb
+*.ilk
+*.ipch
+*.aps
+*.VC.db
+*.VC.opendb
+*.cache
+
+# JetBrains / VS Code
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Env / secrets
+.env
+.env.*
+
+# Backups / archives / big binaries
+backups/
+backup/
+**/backups*/
+**/backup*/
+*.zip
+*.7z
+*.rar
+*.bak
+*.tmp
+*.msi
+*.exe
+*.iso
+
+# Databases
+*.db
+*.sqlite
+
+# Frontend build
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.next/
+out/
+

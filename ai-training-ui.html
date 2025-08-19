@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <!-- Bootstrap Script - ΠΡΙΝ από ΟΠΟΙΟΔΗΠΟΤΕ άλλο script -->
+  <script>
+      window.APP_ENV = /Electron/i.test(navigator.userAgent) ? 'desktop' : 'web';
+      window.ASSETS_BASE = './';
+      window.API_BASE = localStorage.getItem('apiBase')
+        || (APP_ENV === 'desktop' ? 'http://127.0.0.1:5059' : 'http://localhost:5059');
+      window.assetUrl = p => (ASSETS_BASE.replace(/\/$/, '') + '/' + String(p||'').replace(/^\//,''));
+  </script>
+  
+  <!-- Asset Configuration with Default Values -->
+  <script src="asset-config.js"></script>
+  
+  <!-- Global Debug Script - ΠΡΩΤΟ από όλα για να εντοπίσουμε undefined URLs -->
+  <script>
+      // 1) Τύπωσε κάθε αποτυχημένο φόρτωμα asset με element & stack
+      window.addEventListener('error', (e) => {
+          const t = e.target;
+          if (!t) return;
+          const url = t.src || t.href;
+          if (url && /undefined(\?|$)/.test(url)) {
+              console.error('[ASSET ERROR]', t.tagName, url, t);
+              console.trace();
+          }
+      }, true);
+      
+      // 2) Τύλιξε τυχόν helper assetUrl για να καταλάβεις πότε καλείται με undefined
+      const __assetUrl = window.assetUrl || (p => p || '');
+      window.assetUrl = function(p) {
+          if (!p) {
+              console.error('[assetUrl] called with', p, new Error().stack);
+              return ''; // μην επιστρέφεις 'undefined' — γύρνα κενό ή default
+          }
+          return __assetUrl(p);
+      };
+      
+      // 3) Προληπτικά guards για δυναμικά loaders
+      window.loadCss = function(href) {
+          if (!href || /undefined(\?|$)/.test(href)) {
+              console.warn('[loadCss] skip bad href:', href);
+              return null;
+          }
+          const l = document.createElement('link');
+          l.rel = 'stylesheet';
+          l.href = href;
+          document.head.appendChild(l);
+          return l;
+      };
+      
+      window.loadScript = function(src, attrs={}) {
+          if (!src || /undefined(\?|$)/.test(src)) {
+              console.warn('[loadScript] skip bad src:', src);
+              return null;
+          }
+          const s = document.createElement('script');
+          s.src = src;
+          Object.assign(s, attrs);
+          document.head.appendChild(s);
+          return s;
+      };
+  </script>
+  
+  <title>Τοπική Εκπαίδευση AI</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text y="48" font-size="48">🦷</text></svg>'>
+  
+  <!-- Αν θες offline, κατέβασε το tf.min.js τοπικά και άλλαξε το src -->
+  <script src="./assets/js/tf.min.js" onerror="this.src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js'"></script>
+  <style>
+    body{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
+    .wrap{max-width:1100px;margin:24px auto;padding:16px}
+    .card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    h1{margin:0 0 8px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;color:#fff}
+    .btn-primary{background:#6366f1}
+    .btn-accent{background:#8b5cf6}
+    .btn-danger{background:#ef4444}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .mono{font-family:ui-monospace,Consolas,monospace;background:#0b1220;padding:8px;border-radius:8px}
+    progress{width:100%}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🧠 Τοπική Εκπαίδευση Μοντέλου</h1>
+      <div id="dsInfo" class="mono">Dataset: —</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-primary" onclick="AI.scan()">Σάρωση Δεδομένων</button>
+        <button class="btn btn-accent" onclick="AI.train()">Εκπαίδευση</button>
+        <button class="btn btn-primary" onclick="AI.test()">Γρήγορη Δοκιμή</button>
+        <button class="btn btn-danger" onclick="AI.clearModel()">Διαγραφή Τοπικού Μοντέλου</button>
+        <button class="btn btn-primary" onclick="AI.exportDataset()">Εξαγωγή Dataset (JSON)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Πρόοδος</h3>
+      <progress id="prog" max="1" value="0"></progress>
+      <div id="log" class="mono" style="margin-top:8px;height:160px;overflow:auto;white-space:pre-wrap"></div>
+    </div>
+
+    <div class="card grid">
+      <div>
+        <h3>Τελευταίο Δείγμα</h3>
+        <img id="preview" style="max-width:100%;border-radius:12px;border:1px solid #334155"/>
+      </div>
+      <div>
+        <h3>Πρόβλεψη</h3>
+        <div id="pred" class="mono">—</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="ai-training.js"></script>
+</body>
+</html>

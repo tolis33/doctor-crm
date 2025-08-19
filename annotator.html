@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <base href="./" />
+  
+  <!-- HARDENING BOOTSTRAP (load first) -->
+  <script>
+      // === HARDENING BOOTSTRAP (load first) ===
+      (() => {
+          const isDesktop = location.protocol.startsWith('appassets');
+          const API_DEFAULT = isDesktop ? 'http://127.0.0.1:5059' : 'http://localhost:5059';
+
+          // Globally visible config
+          window.__APP__ = {
+              env: isDesktop ? 'desktop' : 'web',
+              ASSETS_BASE: isDesktop ? 'appassets://' : '',
+              API_BASE: (new URLSearchParams(location.search)).get('apiBase') || API_DEFAULT,
+          };
+
+          // Path resolver: δεν επιτρέπει ποτέ "undefined"
+          const bad = v => !v || /(^|\/)undefined(\?|$)/.test(String(v));
+          window.resolveAsset = p => {
+              if (!p || bad(p)) return null;
+              if (/^(https?:|appassets:)/.test(p)) return p;
+              const base = window.__APP__.ASSETS_BASE || '';
+              return base ? (base + (p.startsWith('/') ? p : '/' + p)) : p;
+          };
+
+          // Safe loaders (αν λείπει path => skip, όχι crash)
+          window.loadCss = p => {
+              const href = resolveAsset(p); if (!href) return;
+              const l = document.createElement('link'); l.rel='stylesheet'; l.href=href;
+              l.onerror=()=>console.error('[assets] CSS failed:', href);
+              document.head.appendChild(l);
+          };
+          window.loadScript = p => {
+              const src = resolveAsset(p); if (!src) return;
+              const s = document.createElement('script'); s.src=src; s.defer=true;
+              s.onerror=()=>console.error('[assets] JS failed:', src);
+              document.head.appendChild(s);
+          };
+
+          // Guard: μπλοκάρει src/href που είναι "undefined" (και δεν τα βάζει στον DOM)
+          const origSetAttr = Element.prototype.setAttribute;
+          Element.prototype.setAttribute = function(name, value){
+              if ((name==='src' || name==='href') && bad(value)) {
+                  console.warn('[assets] blocked bad attr', name, value, this.tagName);
+                  return; // μην καλέσεις setAttribute
+              }
+              return origSetAttr.call(this, name, value);
+          };
+
+          // Guard για fetch: αν πάει να καλέσει "…/undefined", επιστρέφουμε ασφαλές JSON αντί για crash
+          const origFetch = window.fetch.bind(window);
+          window.fetch = async (input, init) => {
+              const url = typeof input === 'string' ? input : input?.url;
+              if (bad(url)) {
+                  console.warn('[fetch] blocked bad url', url);
+                  const wantsJson = /\/api\//.test(url || '');
+                  const body = wantsJson ? JSON.stringify({ ok:false, error:'invalid-url' }) : '';
+                  return new Response(body, { status: 400, headers: wantsJson ? { 'Content-Type':'application/json' } : {} });
+              }
+              try { return await origFetch(input, init); }
+              catch (e) {
+                  console.error('[fetch] network error:', e?.message || e);
+                  // Δώσε ασφαλές JSON ώστε το .json() να μην σκάσει
+                  return new Response(JSON.stringify({ ok:false, error:'network-failure' }), { status: 503, headers:{'Content-Type':'application/json'} });
+              }
+          };
+
+          // Fallbacks για localStore helpers (αν λείπουν)
+          if (!window.storageGet)  window.storageGet  = async () => null;
+          if (!window.storageSet)  window.storageSet  = async () => {};
+          if (!window.storageDel)  window.storageDel  = async () => {};
+      })();
+  </script>
+  
+  <!-- Configuration Script - Load programmatically -->
+  <script>
+      // Enhanced loadScript function with error handling
+      window.loadScript = function(src, attrs={}) {
+          if (!src || /undefined(\?|$)/.test(src)) {
+              console.warn('[loadScript] skip bad src:', src);
+              return null;
+          }
+          const s = document.createElement('script');
+          s.src = resolveAsset(src);
+          Object.assign(s, attrs);
+          s.onerror = () => console.error('[assets] JS failed:', s.src);
+          document.head.appendChild(s);
+          return s;
+      };
+      
+      // Load config.js programmatically
+      loadScript('config.js');
+  </script>
+  
+  <!-- Bootstrap Script - ΠΡΙΝ από ΟΠΟΙΟΔΗΠΟΤΕ άλλο script -->
+    <script>
+        // Read URL parameters for build and apiBase
+        const urlParams = new URLSearchParams(window.location.search);
+        const buildParam = urlParams.get('build');
+        const apiBaseParam = urlParams.get('apiBase');
+        
+        window.APP_ENV = /Electron/i.test(navigator.userAgent) ? 'desktop' : 'web';
+        window.ASSETS_BASE = './';
+        window.APP_BUILD = buildParam || localStorage.getItem('appBuild') || 'unknown';
+        window.API_BASE = apiBaseParam || localStorage.getItem('apiBase')
+          || (APP_ENV === 'desktop' ? 'http://127.0.0.1:5059' : 'http://localhost:5059');
+        
+        // Update localStorage if new values are provided
+        if (buildParam) localStorage.setItem('appBuild', buildParam);
+        if (apiBaseParam) localStorage.setItem('apiBase', apiBaseParam);
+        
+        window.assetUrl = p => (ASSETS_BASE.replace(/\/$/, '') + '/' + String(p||'').replace(/^\//,''));
+    </script>
+    
+    <!-- Asset Configuration with Default Values -->
+    <script>
+        // Load asset-config.js and build-mismatch-detector.js using loadScript
+        document.addEventListener('DOMContentLoaded', function() {
+            loadScript('asset-config.js');
+            loadScript('build-mismatch-detector.js');
+        });
+    </script>
+  
+  <!-- Load all assets programmatically -->
+  <script>
+    // Load CSS files using the asset management system
+    loadCss('annotator.css');
+    loadCss('assets/fa/all.min.css');
+    
+    // Load JavaScript files using the asset management system
+    loadScript('build-info.js');
+    loadScript('api-utils.js');
+    loadScript('konva.min.js');
+    loadScript('annotator.js');
+    
+    // Configuration
+    window.CONFIG = { apiBase: localStorage.getItem('apiBase') || "" };
+  </script>
+</head>
+<body>
+  <div class="toolbar">
+    <button id="btnSave">💾 Αποθήκευση</button>
+    <span id="status" style="opacity:.7"></span>
+  </div>
+  <div id="stageContainer"></div>
+
+  <script>
+    // Enhanced cleanup for src/href που είναι άδεια ή "undefined"
+    addEventListener('DOMContentLoaded', () => {
+      // Clean up undefined URLs
+      document.querySelectorAll('[src],[href]').forEach(el => {
+        const v = el.getAttribute('src') ?? el.getAttribute('href');
+        if (!v || v === 'undefined' || v === 'null' || v.trim() === '') {
+          if (el.hasAttribute('src')) el.removeAttribute('src');
+          if (el.hasAttribute('href')) el.setAttribute('href', '#');
+          console.warn('Removed undefined/empty URL from:', el.tagName, el);
+        }
+      });
+      
+      // Initialize annotator feature manager if available
+      if (window.annotatorFeatureManager) {
+        window.annotatorFeatureManager.init(null, false) // Use config system
+          .then(() => {
+            console.log('[Annotator] Feature manager initialized');
+            
+            // Check if API is available and show warning if not
+            if (!window.annotatorFeatureManager.isAvailable()) {
+              const toolbar = document.querySelector('.toolbar');
+              if (toolbar) {
+                const warning = document.createElement('div');
+                warning.style.cssText = 'background: #fff3cd; color: #856404; padding: 8px; margin: 5px 0; border-radius: 4px; font-size: 12px;';
+                warning.innerHTML = '⚠️ Annotator API δεν είναι διαθέσιμο - λειτουργία μόνο τοπικά';
+                toolbar.appendChild(warning);
+              }
+            }
+          })
+          .catch(err => console.warn('[Annotator] Feature manager init failed:', err));
+      }
+    });
+  </script>
+</body>
+</html>

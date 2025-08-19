@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test για .NET API</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>CORS Test για .NET API (θύρα 5059)</h1>
+    <button onclick="testCors()">Δοκιμή CORS</button>
+    <div id="result"></div>
+
+    <script>
+        async function testCors() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Δοκιμάζω CORS...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5059/api/ping');
+                let data = null;
+                try { data = await response.json(); } catch {}
+                if (!response.ok || !data) {
+                    throw new Error('Invalid API response');
+                }
+                
+                if (data.ok) {
+                    resultDiv.innerHTML = '<p style="color: green;">✅ CORS λειτουργεί σωστά!</p><p>Απάντηση: ' + JSON.stringify(data) + '</p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: orange;">⚠️ API απάντησε αλλά με μη αναμενόμενα δεδομένα</p><p>Απάντηση: ' + JSON.stringify(data) + '</p>';
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    resultDiv.innerHTML = '<p style="color: red;">❌ CORS Error: ' + error.message + '</p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: red;">❌ Σφάλμα: ' + error.message + '</p>';
+                }
+            }
+        }
+        
+        // Αυτόματη δοκιμή κατά τη φόρτωση
+        window.onload = function() {
+            console.log('Σελίδα φορτώθηκε. Μπορείτε να δοκιμάσετε το CORS.');
+        };
+    </script>
+</body>
+</html>

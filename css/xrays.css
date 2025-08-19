@@ -1,0 +1,466 @@
+/* X-ray Styles - Στυλ ακτινογραφιών */
+
+.xrays-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.xrays-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.xrays-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.upload-xray-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-xray-btn:hover {
+    background: #229954;
+    transform: translateY(-2px);
+}
+
+.xrays-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.xray-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.xray-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #3498db;
+}
+
+.xray-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #3498db, #2ecc71);
+}
+
+.xray-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.xray-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.xray-date {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    background: #ecf0f1;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.xray-preview {
+    width: 100%;
+    height: 200px;
+    background: #f1f2f6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.xray-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.xray-preview:hover img {
+    transform: scale(1.05);
+}
+
+.xray-placeholder {
+    color: #95a5a6;
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.xray-info {
+    margin-bottom: 15px;
+}
+
+.xray-info p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    color: #34495e;
+}
+
+.xray-info strong {
+    color: #2c3e50;
+}
+
+.xray-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+}
+
+.action-btn.view {
+    background: #3498db;
+    color: white;
+}
+
+.action-btn.view:hover {
+    background: #2980b9;
+    transform: scale(1.05);
+}
+
+.action-btn.analyze {
+    background: #9b59b6;
+    color: white;
+}
+
+.action-btn.analyze:hover {
+    background: #8e44ad;
+    transform: scale(1.05);
+}
+
+.action-btn.edit {
+    background: #f39c12;
+    color: white;
+}
+
+.action-btn.edit:hover {
+    background: #e67e22;
+    transform: scale(1.05);
+}
+
+.action-btn.delete {
+    background: #e74c3c;
+    color: white;
+}
+
+.action-btn.delete:hover {
+    background: #c0392b;
+    transform: scale(1.05);
+}
+
+/* X-ray Viewer Modal */
+.xray-viewer-modal {
+    background: white;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 1200px;
+    height: 90vh;
+    margin: 2.5vh auto;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.viewer-header {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #3498db;
+}
+
+.viewer-header h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.viewer-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.xray-info-panel {
+    width: 300px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-right: 2px solid #e9ecef;
+    overflow-y: auto;
+}
+
+.xray-info-panel h4 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 8px;
+}
+
+.xray-info-panel p {
+    margin: 10px 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.xray-info-panel strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.xray-image-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f1f2f6;
+}
+
+.image-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 20000;
+    background: black;
+    padding: 0;
+}
+
+.xray-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+    cursor: grab;
+}
+
+.xray-image:active {
+    cursor: grabbing;
+}
+
+.no-image {
+    text-align: center;
+    color: #6c757d;
+    padding: 40px;
+}
+
+.no-image-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.no-image p {
+    font-size: 1.1rem;
+    margin: 10px 0;
+}
+
+.no-image small {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.image-controls {
+    background: white;
+    padding: 15px;
+    border-top: 2px solid #e9ecef;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.control-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.control-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.viewer-actions {
+    background: white;
+    padding: 20px;
+    border-top: 2px solid #e9ecef;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.viewer-actions .action-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.viewer-actions .action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.viewer-actions .action-btn.download {
+    background: #27ae60;
+}
+
+.viewer-actions .action-btn.download:hover {
+    background: #229954;
+}
+
+.viewer-actions .action-btn.close {
+    background: #e74c3c;
+}
+
+.viewer-actions .action-btn.close:hover {
+    background: #c0392b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .xray-viewer-modal {
+        width: 98%;
+        height: 95vh;
+        margin: 2.5vh auto;
+    }
+
+    .viewer-content {
+        flex-direction: column;
+    }
+
+    .xray-info-panel {
+        width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .viewer-actions {
+        padding: 15px;
+        gap: 10px;
+    }
+
+    .viewer-actions .action-btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .xrays-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .xray-item {
+        padding: 15px;
+    }
+    
+    .xray-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

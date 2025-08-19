@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Upload Example - JSON POST</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input[type="file"] { margin: 10px 0; }
+        input[type="text"] { margin: 5px 0; padding: 5px; width: 300px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        .code-example { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Client Upload Example - Σωστό JSON POST</h1>
+        
+        <div class="section">
+            <h3>🔧 API Configuration</h3>
+            <p><strong>API Base URL:</strong> <code id="apiBase">http://127.0.0.1:5059</code></p>
+            <p><strong>CORS:</strong> ✅ Ενεργοποιημένο για όλα τα origins</p>
+            <p><strong>Content-Type:</strong> <code>application/json</code></p>
+        </div>
+        
+        <div class="section">
+            <h3>📝 Παράδειγμα Κώδικα</h3>
+            <div class="code-example">
+                <strong>Σωστός τρόπος upload με JSON:</strong>
+                <pre><code>const API_BASE = 'http://127.0.0.1:5059';
+
+// Παράδειγμα upload function
+async function uploadImage(file, patientId) {
+    // Δημιουργία unique ID
+    const newImageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Μετατροπή σε dataUrl (αν χρειάζεται)
+    const dataUrl = await fileToDataUrl(file);
+    
+    // Λήψη διαστάσεων εικόνας
+    const { width, height } = await getImageDimensions(file);
+    
+    // POST request με JSON
+    const response = await fetch(`${API_BASE}/api/images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            clientId: newImageId,     // π.χ. "img_17554..."
+            name: file.name,
+            mime: file.type,
+            width: width,
+            height: height,
+            dataUrl: dataUrl,         // ή άφησέ το null αν έχεις ήδη url
+            patientId: patientId
+        })
+    });
+    
+    return await response.json();
+}</code></pre>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>🧪 Live Test - Upload Εικόνας</h3>
+            <input type="file" id="fileInput" accept="image/*">
+            <br>
+            <input type="text" id="patientIdInput" placeholder="Patient ID (προαιρετικό)" value="patient-123">
+            <br>
+            <button onclick="uploadImageTest()">Upload Image με JSON</button>
+            <div id="uploadResult" class="result"></div>
+        </div>
+        
+        <div class="section">
+            <h3>📋 Test με Sample Data</h3>
+            <p>Δοκιμή χωρίς αρχείο, με sample δεδομένα:</p>
+            <button onclick="uploadSampleData()">Upload Sample JSON</button>
+            <div id="sampleResult" class="result"></div>
+        </div>
+        
+        <div class="section">
+            <h3>🔍 Έλεγχος API Status</h3>
+            <button onclick="checkApiStatus()">Check API Health</button>
+            <div id="statusResult" class="result"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://127.0.0.1:5059';
+        
+        // Helper function: μετατροπή file σε dataUrl
+        function fileToDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Helper function: λήψη διαστάσεων εικόνας
+        function getImageDimensions(file) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    resolve({ width: img.width, height: img.height });
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        }
+        
+        // Main upload function
+        async function uploadImageTest() {
+            const fileInput = document.getElementById('fileInput');
+            const patientIdInput = document.getElementById('patientIdInput');
+            const resultDiv = document.getElementById('uploadResult');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Παρακαλώ επιλέξτε ένα αρχείο!</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const patientId = patientIdInput.value || null;
+            
+            resultDiv.innerHTML = 'Uploading...';
+            
+            try {
+                // Δημιουργία unique ID
+                const newImageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                // Μετατροπή σε dataUrl
+                const dataUrl = await fileToDataUrl(file);
+                
+                // Λήψη διαστάσεων
+                const { width, height } = await getImageDimensions(file);
+                
+                // Δημιουργία JSON payload
+                const payload = {
+                    clientId: newImageId,
+                    name: file.name,
+                    mime: file.type,
+                    width: width,
+                    height: height,
+                    dataUrl: dataUrl,
+                    patientId: patientId
+                };
+                
+                console.log('Sending payload:', payload);
+                
+                // POST request
+                const response = await fetch(`${API_BASE}/api/images`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="${response.ok ? 'success' : 'error'}">
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Response:</strong>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Sample data upload
+        async function uploadSampleData() {
+            const resultDiv = document.getElementById('sampleResult');
+            resultDiv.innerHTML = 'Sending sample data...';
+            
+            try {
+                const newImageId = `img_${Date.now()}_sample`;
+                
+                // Sample 1x1 pixel PNG dataUrl
+                const sampleDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+                
+                const payload = {
+                    clientId: newImageId,
+                    name: 'sample-image.png',
+                    mime: 'image/png',
+                    width: 1,
+                    height: 1,
+                    dataUrl: sampleDataUrl,
+                    patientId: 'patient-sample'
+                };
+                
+                console.log('Sending sample payload:', payload);
+                
+                const response = await fetch(`${API_BASE}/api/images`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="${response.ok ? 'success' : 'error'}">
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Response:</strong>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // API Status check
+        async function checkApiStatus() {
+            const resultDiv = document.getElementById('statusResult');
+            resultDiv.innerHTML = 'Checking API status...';
+            
+            try {
+                const endpoints = [
+                    '/api/ping',
+                    '/api/images'
+                ];
+                
+                const results = [];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(`${API_BASE}${endpoint}`);
+                        const data = await response.json();
+                        results.push({
+                            endpoint,
+                            status: response.status,
+                            ok: response.ok,
+                            data
+                        });
+                    } catch (error) {
+                        results.push({
+                            endpoint,
+                            status: 'ERROR',
+                            ok: false,
+                            error: error.message
+                        });
+                    }
+                }
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <strong>API Status Check:</strong>
+                        <pre>${JSON.stringify(results, null, 2)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

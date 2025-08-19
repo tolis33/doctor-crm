@@ -1,0 +1,682 @@
+/* Responsive Design - Responsive Σχεδιασμός */
+
+/* Mobile First Approach */
+@media (max-width: 480px) {
+    /* General Layout */
+    .container {
+        padding: 10px;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        transform: none;
+        box-shadow: none;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .sidebar.collapsed {
+        height: 60px;
+        overflow: hidden;
+    }
+    
+    .logo-section {
+        padding: 10px 15px;
+        text-align: center;
+    }
+    
+    .logo {
+        font-size: 1.2rem;
+    }
+    
+    .nav-menu {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+        padding: 10px;
+    }
+    
+    .nav-item {
+        flex: 1;
+        min-width: 80px;
+        text-align: center;
+        margin: 0;
+        border-radius: 8px;
+    }
+    
+    .nav-item a {
+        padding: 8px 5px;
+        font-size: 0.8rem;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .nav-item i {
+        font-size: 1rem;
+    }
+    
+    /* Main Content */
+    .main-content {
+        margin-left: 0;
+        padding: 10px;
+    }
+    
+    .header {
+        padding: 10px 15px;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .header h1 {
+        font-size: 1.3rem;
+    }
+    
+    /* Dashboard */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .action-btn {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+    
+    /* Patient Management */
+    .search-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+    
+    .search-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .patient-list {
+        gap: 10px;
+    }
+    
+    .patient-card {
+        padding: 15px;
+    }
+    
+    .patient-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .patient-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .patient-info {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    /* Modals */
+    .modal-container {
+        width: 95%;
+        max-width: none;
+        margin: 20px auto;
+        max-height: calc(100vh - 40px);
+    }
+    
+    .modal-header {
+        padding: 15px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .modal-body {
+        padding: 15px;
+    }
+    
+    .patient-tabs {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 8px 5px;
+        font-size: 0.8rem;
+    }
+    
+    .patient-info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+    
+    /* X-rays */
+    .xrays-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .xrays-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .xray-item {
+        padding: 15px;
+    }
+    
+    .xray-actions {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .xray-actions .btn {
+        flex: 1;
+        min-width: 70px;
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+    
+    /* X-ray Viewer */
+    .xray-viewer-content {
+        flex-direction: column;
+        height: auto;
+        max-height: calc(100vh - 120px);
+    }
+    
+    .xray-info-panel {
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .xray-image-panel {
+        width: 100%;
+        height: 300px;
+    }
+    
+    .xray-viewer-actions {
+        flex-wrap: wrap;
+        gap: 5px;
+        padding: 10px;
+    }
+    
+    .xray-viewer-actions .btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 8px 5px;
+        font-size: 0.8rem;
+    }
+    
+    /* Odontogram */
+    .odontogram-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .odontogram-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .patient-selector {
+        width: 100%;
+    }
+    
+    .tooth-grid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 3px;
+        max-width: 100%;
+    }
+    
+    .tooth {
+        width: 30px;
+        height: 30px;
+        font-size: 0.7rem;
+    }
+    
+    .odontogram-tools {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .tool-group {
+        padding: 10px;
+    }
+    
+    .tool-buttons {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .tool-btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 8px 5px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Tablet Portrait */
+@media (min-width: 481px) and (max-width: 768px) {
+    /* Sidebar */
+    .sidebar {
+        width: 200px;
+    }
+    
+    .nav-item a {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+    
+    /* Main Content */
+    .main-content {
+        margin-left: 200px;
+        padding: 15px;
+    }
+    
+    /* Dashboard */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    /* Patient Management */
+    .search-container {
+        flex-direction: row;
+        gap: 15px;
+    }
+    
+    .patient-list {
+        gap: 15px;
+    }
+    
+    .patient-info {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    /* Modals */
+    .modal-container {
+        width: 90%;
+        max-width: 600px;
+    }
+    
+    .patient-tabs {
+        flex-wrap: nowrap;
+    }
+    
+    .patient-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    /* X-rays */
+    .xrays-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .xray-viewer-content {
+        flex-direction: row;
+        height: 500px;
+    }
+    
+    .xray-info-panel {
+        width: 300px;
+        max-height: none;
+    }
+    
+    .xray-image-panel {
+        flex: 1;
+        height: auto;
+    }
+    
+    /* Odontogram */
+    .odontogram-controls {
+        flex-direction: row;
+        gap: 15px;
+    }
+    
+    .tooth-grid {
+        grid-template-columns: repeat(16, 1fr);
+        gap: 4px;
+    }
+    
+    .tooth {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+    
+    .odontogram-tools {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+/* Tablet Landscape & Small Desktop */
+@media (min-width: 769px) and (max-width: 1024px) {
+    /* Sidebar */
+    .sidebar {
+        width: 220px;
+    }
+    
+    /* Main Content */
+    .main-content {
+        margin-left: 220px;
+        padding: 20px;
+    }
+    
+    /* Dashboard */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    /* Patient Management */
+    .patient-info {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+    
+    /* Modals */
+    .modal-container {
+        width: 80%;
+        max-width: 700px;
+    }
+    
+    .patient-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    /* X-rays */
+    .xrays-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    /* Odontogram */
+    .tooth-grid {
+        grid-template-columns: repeat(16, 1fr);
+        gap: 5px;
+    }
+    
+    .tooth {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .odontogram-tools {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
+/* Large Desktop */
+@media (min-width: 1025px) and (max-width: 1440px) {
+    /* Dashboard */
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 25px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 25px;
+    }
+    
+    /* Patient Management */
+    .patient-info {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    
+    /* X-rays */
+    .xrays-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 25px;
+    }
+    
+    /* Odontogram */
+    .tooth {
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+    }
+    
+    .odontogram-tools {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 25px;
+    }
+}
+
+/* Extra Large Desktop */
+@media (min-width: 1441px) {
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Dashboard */
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 30px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 30px;
+    }
+    
+    /* X-rays */
+    .xrays-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 30px;
+    }
+    
+    /* Odontogram */
+    .tooth {
+        width: 50px;
+        height: 50px;
+        font-size: 1.1rem;
+    }
+    
+    .odontogram-tools {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 30px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar,
+    .header,
+    .modal-overlay,
+    .action-btn,
+    .btn,
+    .xray-actions,
+    .patient-actions,
+    .odontogram-tools {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 0;
+    }
+    
+    .content-section {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+    
+    .patient-card,
+    .xray-item {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+    
+    .tooth-grid {
+        page-break-inside: avoid;
+    }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .tooth,
+    .stat-card,
+    .patient-card,
+    .xray-item {
+        border-width: 0.5px;
+    }
+    
+    .sidebar {
+        border-right-width: 0.5px;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --text-primary: #ffffff;
+        --text-secondary: #b0b0b0;
+        --border-color: #404040;
+        --accent-color: #4a9eff;
+    }
+    
+    body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+    }
+    
+    .sidebar {
+        background: var(--bg-secondary);
+        border-right-color: var(--border-color);
+    }
+    
+    .content-section,
+    .patient-card,
+    .modal-container,
+    .xray-item {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+    }
+    
+    .tooth {
+        background: var(--bg-secondary);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+    }
+}
+
+/* Accessibility Improvements */
+@media (prefers-contrast: high) {
+    .btn,
+    .action-btn,
+    .tooth,
+    .patient-card {
+        border-width: 2px;
+        border-style: solid;
+    }
+    
+    .nav-item.active a {
+        border: 2px solid #ffffff;
+    }
+}
+
+/* Landscape Orientation for Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .sidebar {
+        width: 180px;
+        height: 100vh;
+        position: fixed;
+    }
+    
+    .main-content {
+        margin-left: 180px;
+    }
+    
+    .nav-menu {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .nav-item {
+        margin: 0;
+    }
+    
+    .nav-item a {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+}

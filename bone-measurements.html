@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <!-- Global Debug Script - ΠΡΩΤΟ από όλα για να εντοπίσουμε undefined URLs -->
+  <script>
+      // 1) Τύπωσε κάθε αποτυχημένο φόρτωμα asset με element & stack
+      window.addEventListener('error', (e) => {
+          const t = e.target;
+          if (!t) return;
+          const url = t.src || t.href;
+          if (url && /undefined(\?|$)/.test(url)) {
+              console.error('[ASSET ERROR]', t.tagName, url, t);
+              console.trace();
+          }
+      }, true);
+      
+      // 2) Τύλιξε τυχόν helper assetUrl για να καταλάβεις πότε καλείται με undefined
+      const __assetUrl = window.assetUrl || (p => p || '');
+      window.assetUrl = function(p) {
+          if (!p) {
+              console.error('[assetUrl] called with', p, new Error().stack);
+              return ''; // μην επιστρέφεις 'undefined' — γύρνα κενό ή default
+          }
+          return __assetUrl(p);
+      };
+      
+      // 3) Προληπτικά guards για δυναμικά loaders
+      window.loadCss = function(href) {
+          if (!href || /undefined(\?|$)/.test(href)) {
+              console.warn('[loadCss] skip bad href:', href);
+              return null;
+          }
+          const l = document.createElement('link');
+          l.rel = 'stylesheet';
+          l.href = href;
+          document.head.appendChild(l);
+          return l;
+      };
+      
+      window.loadScript = function(src, attrs={}) {
+          if (!src || /undefined(\?|$)/.test(src)) {
+              console.warn('[loadScript] skip bad src:', src);
+              return null;
+          }
+          const s = document.createElement('script');
+          s.src = src;
+          Object.assign(s, attrs);
+          document.head.appendChild(s);
+          return s;
+      };
+  </script>
+  
+  <title>CBCT Bone Measurements</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text y="48" font-size="48">🦷</text></svg>'>
+  <script>
+    window.APP_ENV = 'production';
+    window.ASSETS_BASE = '';
+    window.API_BASE = 'http://localhost:5000';
+    window.assetUrl = function(path) {
+      return window.ASSETS_BASE + '/' + path.replace(/^\//,'');
+    };
+  </script>
+  
+  <!-- Asset Configuration with Default Values -->
+  <script src="asset-config.js"></script>
+  <!-- βιβλιοθήκη για NIfTI -->
+  <script src="./assets/js/nifti-reader.js" onerror="this.src='https://cdn.jsdelivr.net/npm/nifti-reader-js@next/dist/nifti-reader.js'"></script>
+
+  <style>
+    :root { --bg:#0f172a; --fg:#e2e8f0; --card:#111827; --muted:#94a3b8; }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Arial}
+    .wrap{display:grid;grid-template-columns:320px 1fr;height:100%}
+    .panel{background:var(--card);border-left:1px solid #1f2937;padding:14px;overflow:auto}
+    .tools{display:grid;gap:10px;padding:14px}
+    .row{display:grid;gap:6px}
+    .row.two{grid-template-columns:1fr 1fr}
+    label{font-weight:600;color:var(--muted);font-size:.9rem}
+    input[type="number"],input[type="text"],input[type="date"],select,button{padding:8px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:var(--fg)}
+    button{cursor:pointer}
+    #view{position:relative;background:#000;display:flex;align-items:center;justify-content:center}
+    #cvs{max-width:100%;max-height:100%}
+    .hud{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.5);padding:6px 8px;border-radius:8px;font-size:.85rem}
+    .hint{color:var(--muted);font-size:.85rem}
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th,.tbl td{border:1px solid #233147;padding:6px 8px;font-size:.9rem}
+    .badge{display:inline-block;padding:2px 6px;border-radius:999px;background:#334155;font-size:.8rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- ΑΡΙΣΤΕΡΑ: ΕΡΓΑΛΕΙΑ -->
+    <div class="tools">
+      <div class="row">
+        <label>Φόρτωση CBCT (.nii ή .nii.gz)</label>
+        <input id="niiFile" type="file" accept=".nii,.nii.gz" />
+      </div>
+      <div class="row two">
+        <div>
+          <label>Μάσκα Καναλιού (προαιρετική)</label>
+          <input id="maskCanal" type="file" accept=".nii,.nii.gz"/>
+        </div>
+        <div>
+          <label>Μάσκα Ιγμορείου (προαιρετική)</label>
+          <input id="maskSinus" type="file" accept=".nii,.nii.gz"/>
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label>Προβολή</label>
+          <select id="plane">
+            <option value="axial" selected>Axial</option>
+            <option value="sagittal">Sagittal</option>
+            <option value="coronal">Coronal</option>
+          </select>
+        </div>
+        <div>
+          <label>Slice</label>
+          <input id="slice" type="range" min="0" max="0" value="0"/>
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label>Window L</label>
+          <input id="winLevel" type="number" value="500"/>
+        </div>
+        <div>
+          <label>Window W</label>
+          <input id="winWidth" type="number" value="2000"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Bone threshold (intensity)</label>
+        <input id="boneThr" type="number" value="300"/>
+        <div class="hint">Χρησιμοποιείται όταν δεν έχεις μάσκες· δηλώνει "οστό" > threshold.</div>
+      </div>
+
+      <div class="row">
+        <label>Εργαλεία</label>
+        <div class="row two">
+          <button id="toolWidth">Πλάτος ακρολοφίας</button>
+          <button id="toolImplant">Εικονικό εμφύτευμα</button>
+        </div>
+        <div class="row">
+          <button id="loadDemo">Φόρτωση Demo CBCT</button>
+        </div>
+        <div class="hint">Πλάτος: 2 κλικ. — Εμφύτευμα: κλικ σημείο εισόδου → κλικ κατεύθυνση.</div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label>Ø (mm)</label>
+          <input id="impDia" type="number" step="0.1" value="4.0"/>
+        </div>
+        <div>
+          <label>Μήκος (mm)</label>
+          <input id="impLen" type="number" step="0.5" value="10"/>
+        </div>
+      </div>
+      <div class="row">
+        <label>Ημ/νία χειρουργείου</label>
+        <input id="surgDate" type="date"/>
+      </div>
+
+      <div class="row two">
+        <button id="saveToParent">Αποθήκευση στο Stomadiagnosis</button>
+        <button id="exportJSON">Export JSON</button>
+      </div>
+
+      <div class="row">
+        <table class="tbl" id="resultsTbl">
+          <thead><tr><th>Τύπος</th><th>Τιμές</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ΔΕΞΙΑ: ΠΡΟΒΟΛΗ -->
+    <div id="view">
+      <canvas id="cvs"></canvas>
+      <div class="hud" id="hud">—</div>
+    </div>
+  </div>
+
+<script>
+/* ======= State ======= */
+let vol = null;           // {data, dims [x,y,z], spacing [sx,sy,sz], min,max}
+let maskCanal = null;     // δυαδικές μάσκες αν υπάρχουν
+let maskSinus = null;
+let plane = 'axial';
+let sliceIndex = 0;
+let tool = null;          // 'width' | 'implant'
+let clicks = [];
+
+/* ======= Utils ======= */
+const id = x => document.getElementById(x);
+function readFileAsArrayBuffer(file){
+  return new Promise(res => { const r=new FileReader(); r.onload=()=>res(r.result); r.readAsArrayBuffer(file); });
+}
+function niftiToVolume(hdr, img){
+  const dims = [hdr.dims[1], hdr.dims[2], hdr.dims[3]];
+  const spacing = [hdr.pixDims[1], hdr.pixDims[2], hdr.pixDims[3]];
+  const data = nifti.decodeNIfTIImage(hdr, img);
+  // υποστήριξη διαφόρων τύπων
+  let arr;
+  if (nifti.isCompressed(img)) ; // already handled by lib
+  if (nifti.Utils.isTypedArray(data)) arr = data;
+  else arr = new Float32Array(data);
+  // εύρος
+  let min=Infinity,max=-Infinity;
+  for(let i=0;i<arr.length;i++){ const v=arr[i]; if(v<min)min=v; if(v>max)max=v; }
+  return { data:arr, dims, spacing, min, max };
+}
+function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function toIndex(x,y,z){ const [nx,ny,nz]=vol.dims; return x + y*nx + z*nx*ny; }
+
+/* ======= Loaders ======= */
+async function loadNii(input, isMask=false){
+  if (!input.files[0]) return null;
+  const buf = await readFileAsArrayBuffer(input.files[0]);
+  const isCompressed = nifti.isCompressed(buf);
+  const data = isCompressed ? nifti.decompress(buf) : buf;
+  if (!nifti.isNIFTI(data)) { alert('Όχι έγκυρο NIfTI'); return null; }
+  const hdr = nifti.readHeader(data);
+  const img = nifti.readImage(hdr, data);
+  const V = niftiToVolume(hdr, img);
+  if (isMask){
+    // κατώφλι > 0
+    const bin = new Uint8Array(V.data.length);
+    for(let i=0;i<V.data.length;i++) bin[i] = V.data[i] > 0 ? 1 : 0;
+    V.data = bin; V.min=0; V.max=1;
+  }
+  return V;
+}
+
+/* ======= Rendering ======= */
+function getSlice(plane, k){
+  const [nx,ny,nz]=vol.dims;
+  const out = new Float32Array((plane==='axial')? nx*ny : (plane==='sagittal'? ny*nz : nx*nz));
+  if (plane==='axial'){ // z = k
+    for (let y=0;y<ny;y++) for (let x=0;x<nx;x++) out[y*nx+x] = vol.data[toIndex(x,y,k)];
+  } else if (plane==='sagittal'){ // x = k
+    for (let z=0;z<nz;z++) for (let y=0;y<ny;y++) out[z*ny+y] = vol.data[toIndex(k,y,z)];
+  } else { // coronal y = k
+    for (let z=0;z<nz;z++) for (let x=0;x<nx;x++) out[z*nx+x] = vol.data[toIndex(x,k,z)];
+  }
+  return out;
+}
+function sliceDims(plane){
+  const [nx,ny,nz]=vol.dims, [sx,sy,sz]=vol.spacing;
+  if (plane==='axial')   return {w:nx,h:ny, px:[sx,sy]};
+  if (plane==='sagittal')return {w:ny,h:nz, px:[sy,sz]};
+  return {w:nx,h:nz, px:[sx,sz]};
+}
+function draw(){
+  if (!vol) return;
+  const cvs=id('cvs'), ctx=cvs.getContext('2d');
+  const {w,h,px} = sliceDims(plane);
+  cvs.width = w; cvs.height = h;
+  const img = ctx.createImageData(w,h);
+  const arr = getSlice(plane, sliceIndex);
+  const L = +id('winLevel').value, W = +id('winWidth').value;
+  const lo = L - W/2, hi = L + W/2;
+  for (let i=0;i<arr.length;i++){
+    const v = clamp((arr[i]-lo)/(hi-lo), 0, 1) * 255;
+    img.data[i*4+0]=img.data[i*4+1]=img.data[i*4+2]=v; img.data[i*4+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  // overlay implant/width clicks
+  ctx.strokeStyle='#00e1ff'; ctx.lineWidth=1;
+  if (tool==='width' && clicks.length===1){
+    const a=clicks[0]; ctx.beginPath(); ctx.arc(a.x,a.y,3,0,Math.PI*2); ctx.stroke();
+  }
+  if (tool==='implant' && clicks.length>=1){
+    const a=clicks[0]; ctx.beginPath(); ctx.arc(a.x,a.y,3,0,Math.PI*2); ctx.stroke();
+    if (clicks.length===2){
+      const b=clicks[1];
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const lenPx = (+id('impLen').value) / (px[1]); // along vertical pixel size assumption
+      const ux = dx/Math.hypot(dx,dy), uy = dy/Math.hypot(dx,dy);
+      const ex = a.x + ux*lenPx, ey = a.y + uy*lenPx;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(ex,ey); ctx.strokeStyle='#ffa500'; ctx.stroke();
+      const diaPx = (+id('impDia').value) / px[0];
+      ctx.beginPath(); ctx.ellipse(a.x,a.y, diaPx/2, diaPx/2, 0, 0, Math.PI*2); ctx.strokeStyle='#ffa500'; ctx.stroke();
+    }
+  }
+  id('hud').textContent = `Plane: ${plane.toUpperCase()} | Slice ${sliceIndex} / ${vol.dims[plane==='axial'?2:plane==='sagittal'?0:1]-1} | Spacing: ${px[0].toFixed(3)}×${px[1].toFixed(3)} mm/px`;
+}
+
+/* ======= Measurements ======= */
+function pxPerMm(){ return sliceDims(plane).px; }
+function measureWidth(a,b){
+  const [sx,sy]=pxPerMm(); const mm = Math.hypot((b.x-a.x)*sx, (b.y-a.y)*sy).toFixed(2);
+  appendResult('ridge_width', `πλάτος: ${mm} mm`, {a,b,mm:+mm, plane, slice:sliceIndex});
+}
+function implantMetrics(a,b){
+  const {px} = sliceDims(plane);
+  const dia = +id('impDia').value, len = +id('impLen').value;
+  // μήκος σε pixels ως προς κατεύθυνση AB
+  const dx=b.x-a.x, dy=b.y-a.y, d = Math.hypot(dx,dy);
+  const ux=dx/d, uy=dy/d;
+  const lenPx = len / px[1];           // προσεγγιστικά
+  const diaPx = dia / px[0];
+
+  // Υπολογισμός "όγκου οστού μέσα στον κύλινδρο" (proxy 2.5D): δείγμα γύρω από γραμμή AB
+  const samples = 200;
+  let boneCount = 0, totalCount = 0;
+  const thr = +id('boneThr').value;
+  for (let i=0;i<samples;i++){
+    const t = i/(samples-1);
+    const cx = a.x + ux * lenPx * t, cy = a.y + uy * lenPx * t;
+    // δειγματοληψία δίσκου διαμέτρου diaPx
+    const R = diaPx/2, step = Math.max(1, Math.floor(R/2));
+    for (let y=-R; y<=R; y+=step){
+      for (let x=-R; x<=R; x+=step){
+        if (x*x + y*y > R*R) continue;
+        const sxp = Math.round(cx+x), syp = Math.round(cy+y);
+        const arr = getSlice(plane, sliceIndex);
+        const w = sliceDims(plane).w, h = sliceDims(plane).h;
+        if (sxp<0||syp<0||sxp>=w||syp>=h) continue;
+        const val = arr[syp*w + sxp];
+        let isBone = false;
+        if (maskCanal && plane==='axial'){/* αγνόησε */}
+        isBone = (val >= thr);
+        totalCount++; if (isBone) boneCount++;
+      }
+    }
+  }
+  const boneRatio = totalCount? (boneCount/totalCount) : 0;
+  const area_mm2 = Math.PI*(dia/2)*(dia/2);
+  const vol_mm3  = area_mm2 * len * boneRatio;
+  appendResult('implant', `Ø${dia}×${len}mm — οστική επάρκεια ~${Math.round(boneRatio*100)}% (όγκ.) ≈ ${vol_mm3.toFixed(1)} mm³`, {
+    entry:a, dir:b, dia_mm:dia, len_mm:len, plane, slice:sliceIndex, bone_ratio:+boneRatio, bone_volume_mm3:+vol_mm3,
+    surgery_date: id('surgDate').value || null
+  });
+}
+
+/* ======= Results table & export ======= */
+const results = [];
+function appendResult(type, label, data){
+  results.push({type,label,data,timestamp:new Date().toISOString()});
+  const tr=document.createElement('tr');
+  tr.innerHTML = `<td><span class="badge">${type}</span></td><td>${label}</td>`;
+  id('resultsTbl').querySelector('tbody').appendChild(tr);
+}
+function exportJSON(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({results, plane, sliceIndex}, null, 2)],{type:'application/json'}));
+  a.download = `cbct_results_${Date.now()}.json`; a.click();
+}
+function saveToParent(){
+  // στέλνει τα αποτελέσματα στον γονέα (Stomadiagnosis)
+  parent.postMessage({ type:'cbct_bone_results', payload:{ results, plane, sliceIndex } }, '*');
+  alert('Στάλθηκαν τα αποτελέσματα στο Stomadiagnosis.');
+}
+
+/* ======= Events ======= */
+const niiFileEl = id('niiFile');
+if (niiFileEl) {
+  niiFileEl.addEventListener('change', async e=>{
+    vol = await loadNii(e.target);
+    if (!vol){ alert('Αποτυχία φόρτωσης'); return; }
+    const maxSlice = vol.dims[2]-1;
+    const sliceEl = id('slice');
+    if (sliceEl) {
+      sliceEl.max = maxSlice; 
+      sliceEl.value = Math.floor(maxSlice/2);
+      sliceIndex = +sliceEl.value;
+    }
+    draw();
+  });
+}
+
+const maskCanalEl = id('maskCanal');
+if (maskCanalEl) {
+  maskCanalEl.addEventListener('change', async e=>{ maskCanal = await loadNii(e.target, true); });
+}
+
+const maskSinusEl = id('maskSinus');
+if (maskSinusEl) {
+  maskSinusEl.addEventListener('change', async e=>{ maskSinus = await loadNii(e.target, true); });
+}
+
+const planeEl = id('plane');
+if (planeEl) {
+  planeEl.addEventListener('change', e=>{ plane=e.target.value; draw(); });
+}
+
+const sliceEl = id('slice');
+if (sliceEl) {
+  sliceEl.addEventListener('input', e=>{ sliceIndex=+e.target.value; draw(); });
+}
+
+const winLevelEl = id('winLevel');
+if (winLevelEl) {
+  winLevelEl.addEventListener('input', draw);
+}
+
+const winWidthEl = id('winWidth');
+if (winWidthEl) {
+  winWidthEl.addEventListener('input', draw);
+}
+
+const toolWidthEl = id('toolWidth');
+if (toolWidthEl) {
+  toolWidthEl.addEventListener('click', ()=>{ tool='width'; clicks=[]; });
+}
+
+const toolImplantEl = id('toolImplant');
+if (toolImplantEl) {
+  toolImplantEl.addEventListener('click', ()=>{ tool='implant'; clicks=[]; });
+}
+
+const exportJSONEl = id('exportJSON');
+if (exportJSONEl) {
+  exportJSONEl.addEventListener('click', exportJSON);
+}
+
+const saveToParentEl = id('saveToParent');
+if (saveToParentEl) {
+  saveToParentEl.addEventListener('click', saveToParent);
+}
+
+const cvsEl = id('cvs');
+if (cvsEl) {
+  cvsEl.addEventListener('click', e=>{
+  if (!vol || !tool) return;
+  const rect = e.target.getBoundingClientRect();
+  const x = Math.round((e.clientX - rect.left) * (e.target.width / rect.width));
+  const y = Math.round((e.clientY - rect.top) * (e.target.height / rect.height));
+  clicks.push({x,y});
+  if (tool==='width' && clicks.length===2){
+    const [a,b]=clicks; measureWidth(a,b); clicks=[];
+  }
+  if (tool==='implant' && clicks.length===2){
+    const [a,b]=clicks; implantMetrics(a,b); clicks=[];
+  }
+  draw();
+  });
+}
+
+function makeDemoVolume(){
+  const nx=192, ny=192, nz=160;
+  const spacing=[0.3,0.3,0.3]; // mm/voxel
+  const arr = new Float32Array(nx*ny*nz);
+
+  const cx = nx/2, cy = ny*0.65;
+  for (let z=0; z<nz; z++){
+    for (let y=0; y<ny; y++){
+      for (let x=0; x<nx; x++){
+        let v = -500; // αέρας
+        const r = Math.hypot(x-cx, y-cy);
+
+        // "γνάθος" – δακτύλιος οστού
+        if (r>40 && r<70) v = 800;
+
+        // "κανάλι" – χαμηλότερης έντασης λωρίδα μέσα στο οστό
+        const canal = (r>48 && r<52) && (z>50 && z<120);
+        if (canal) v = 100;
+
+        // "ιγμόρεια" – δύο κοιλότητες πάνω
+        const sL = Math.hypot(x-(cx-40), y-(ny*0.35)) < 18 && y < ny*0.45;
+        const sR = Math.hypot(x-(cx+40), y-(ny*0.35)) < 18 && y < ny*0.45;
+        if (sL || sR) v = -300;
+
+        arr[z*nx*ny + y*nx + x] = v;
+      }
+    }
+  }
+
+  vol = { data: arr, dims: [nx,ny,nz], spacing, min: -500, max: 1200 };
+  plane = 'axial';
+  const sliceEl = id('slice');
+  if (sliceEl) {
+    sliceEl.max = nz-1;
+    sliceIndex = Math.floor(nz/2);
+    sliceEl.value = sliceIndex;
+  }
+  draw();
+  const hudEl = id('hud');
+  if (hudEl) {
+    hudEl.textContent += ' | DEMO';
+  }
+}
+
+// event
+document.getElementById('loadDemo')?.addEventListener('click', makeDemoVolume);
+
+</script>
+</body>
+</html>

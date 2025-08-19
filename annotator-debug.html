@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Annotator Debug Console</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 5px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Annotator Debug Console</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Check Assets Loading</h3>
+            <p>Ελέγχει αν φορτώθηκαν τα σωστά assets (relative paths)</p>
+            <button onclick="checkAssets()">Check Assets</button>
+            <div id="assetsResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 2: Check ID in LocalStorage</h3>
+            <p>Ελέγχει ότι το ID υπάρχει στο localStorage</p>
+            <button onclick="checkIdInLocal()">Check ID</button>
+            <div id="idResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 3: Open Annotator with Test ID</h3>
+            <p>Ανοίγει το annotator με ένα test ID</p>
+            <button class="annotate-btn" onclick="openAnnotatorTest()">Open Annotator Test</button>
+            <div id="annotatorResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Current URL Parameters</h3>
+            <div id="urlParams"></div>
+        </div>
+    </div>
+    
+    <script>
+        function checkAssets() {
+            const result = document.getElementById('assetsResult');
+            
+            try {
+                const assets = [...document.querySelectorAll('link[rel=stylesheet],script[src]')]
+                    .map(x => x.href || x.src);
+                
+                let html = '<div class="result">';
+                html += '<h4>Loaded Assets:</h4>';
+                html += '<pre>' + JSON.stringify(assets, null, 2) + '</pre>';
+                
+                // Check for annotator.css
+                const annotatorCss = assets.find(url => url.includes('annotator.css'));
+                if (annotatorCss) {
+                    if (annotatorCss.includes('appassets')) {
+                        html += '<div class="error">❌ ΛΑΘΟΣ: annotator.css φορτώνεται από appassets: ' + annotatorCss + '</div>';
+                    } else {
+                        html += '<div class="success">✅ ΣΩΣΤΟ: annotator.css φορτώνεται σωστά: ' + annotatorCss + '</div>';
+                    }
+                } else {
+                    html += '<div class="error">❌ ΛΑΘΟΣ: annotator.css δεν βρέθηκε!</div>';
+                }
+                
+                html += '</div>';
+                result.innerHTML = html;
+            } catch (e) {
+                result.innerHTML = '<div class="result error">Error: ' + e.message + '</div>';
+            }
+        }
+        
+        function checkIdInLocal() {
+            const result = document.getElementById('idResult');
+            
+            try {
+                const id = new URLSearchParams(location.search).get('id');
+                const hit = (JSON.parse(localStorage.getItem('images') || '[]') || []).find(x => x.id === id);
+                
+                let html = '<div class="result">';
+                html += '<h4>ID Check Results:</h4>';
+                html += '<pre>';
+                html += 'id = ' + JSON.stringify(id) + '\n';
+                html += 'existsInLocal = ' + !!hit + '\n';
+                html += 'hit = ' + JSON.stringify(hit, null, 2);
+                html += '</pre>';
+                
+                if (!id) {
+                    html += '<div class="error">❌ ΛΑΘΟΣ: Δεν υπάρχει ID στο URL!</div>';
+                } else if (!hit) {
+                    html += '<div class="error">❌ ΛΑΘΟΣ: existsInLocal=false → φτιάξε το βήμα #3 (λάθος id στο άνοιγμα)</div>';
+                } else {
+                    html += '<div class="success">✅ ΣΩΣΤΟ: ID βρέθηκε στο localStorage</div>';
+                }
+                
+                html += '</div>';
+                result.innerHTML = html;
+            } catch (e) {
+                result.innerHTML = '<div class="result error">Error: ' + e.message + '</div>';
+            }
+        }
+        
+        function openAnnotatorTest() {
+            const result = document.getElementById('annotatorResult');
+            
+            try {
+                // Get a test ID from localStorage
+                const images = JSON.parse(localStorage.getItem('images') || '[]');
+                
+                if (images.length === 0) {
+                    result.innerHTML = '<div class="result error">❌ Δεν υπάρχουν εικόνες στο localStorage για test</div>';
+                    return;
+                }
+                
+                const testId = images[0].id;
+                const annotatorUrl = 'annotator.html?id=' + encodeURIComponent(testId);
+                
+                let html = '<div class="result">';
+                html += '<h4>Test Annotator Opening:</h4>';
+                html += '<p>Test ID: ' + testId + '</p>';
+                html += '<p>URL: <a href="' + annotatorUrl + '" target="_blank">' + annotatorUrl + '</a></p>';
+                html += '<button class="annotate-btn" onclick="window.open(\'' + annotatorUrl + '\', \'_blank\')">' + 'Open in New Window</button>';
+                html += '</div>';
+                
+                result.innerHTML = html;
+            } catch (e) {
+                result.innerHTML = '<div class="result error">Error: ' + e.message + '</div>';
+            }
+        }
+        
+        function updateUrlParams() {
+            const params = new URLSearchParams(location.search);
+            const paramsDiv = document.getElementById('urlParams');
+            
+            let html = '<div class="result">';
+            html += '<h4>Current URL Parameters:</h4>';
+            html += '<pre>';
+            
+            if (params.toString()) {
+                for (const [key, value] of params) {
+                    html += key + ' = ' + value + '\n';
+                }
+            } else {
+                html += 'No URL parameters found';
+            }
+            
+            html += '</pre></div>';
+            paramsDiv.innerHTML = html;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUrlParams();
+            
+            // Auto-run checks if we're in annotator context
+            if (location.pathname.includes('annotator')) {
+                setTimeout(() => {
+                    checkAssets();
+                    checkIdInLocal();
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
